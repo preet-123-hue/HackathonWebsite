@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Jharkhand Eco & Cultural Tourism</title>
+  <meta name="description" content="Smart digital platform to promote eco & cultural tourism in Jharkhand.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <!-- Leaflet (OpenStreetMap) -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <style>
+    :root{
+      --bg:#0f1115; --card:#151923; --muted:#9ba3b4; --pri:#73d13d; --pri-2:#3bd1c4; --acc:#ffd166; --danger:#ff6b6b;
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;background:var(--bg);color:#e7ecf3;font-family:Poppins,system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial}
+    a{color:inherit;text-decoration:none}
+    .container{width:min(1180px,92%);margin:auto}
+    header.nav{
+      position:sticky;top:0;z-index:50;background:rgba(15,17,21,.7);backdrop-filter:saturate(180%) blur(14px);
+      border-bottom:1px solid #242a36;
+    }
+    .nav-inner{display:flex;align-items:center;justify-content:space-between;padding:.8rem 0}
+    .brand{display:flex;gap:.6rem;align-items:center}
+    .logo{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--pri),var(--pri-2));display:grid;place-items:center;font-weight:700;color:#0b0e13}
+    .menu{display:flex;gap:1rem;font-size:.95rem}
+    .menu a{opacity:.9;padding:.4rem .7rem;border-radius:10px}
+    .menu a:hover{background:#1b2130}
+    .btn{display:inline-block;background:linear-gradient(135deg,var(--pri),var(--pri-2));color:#0b0e13;padding:.7rem 1rem;border:none;border-radius:12px;font-weight:700;cursor:pointer}
+    .btn-outline{background:transparent;border:1px solid #2b3446;color:#e7ecf3}
+    .hero{
+      min-height:64vh;display:grid;place-items:center;text-align:center;padding:5rem 0;background:
+        radial-gradient(1200px 500px at 10% -10%, rgba(59,209,196,.15), transparent 60%),
+        radial-gradient(900px 450px at 90% 0%, rgba(115,209,61,.14), transparent 60%);
+    }
+    .hero h1{font-size:clamp(1.9rem,4.5vw,3.3rem);line-height:1.1;margin:.2rem 0}
+    .hero p{color:var(--muted);max-width:780px;margin:0 auto 1.2rem}
+    .grid{display:grid;gap:1rem}
+    .grid-3{grid-template-columns:repeat(3,1fr)}
+    .grid-2{grid-template-columns:repeat(2,1fr)}
+    @media (max-width:960px){.grid-3{grid-template-columns:1fr 1fr}.grid-2{grid-template-columns:1fr}}
+    @media (max-width:620px){.grid-3{grid-template-columns:1fr}}
+    .card{background:var(--card);border:1px solid #242a36;border-radius:18px;overflow:hidden}
+    .card .media{aspect-ratio:16/9;width:100%;object-fit:cover}
+    .card .pad{padding:1rem 1rem 1.2rem}
+    .chip{display:inline-flex;align-items:center;gap:.4rem;padding:.2rem .6rem;border-radius:999px;border:1px solid #2b3446;color:#c7cfdb;font-size:.75rem}
+    section{padding:3rem 0}
+    h2{font-size:clamp(1.3rem,2.3vw,1.7rem);margin:.2rem 0 1rem}
+    .muted{color:var(--muted)}
+    .price{font-size:1.8rem;font-weight:800}
+    .features{margin:.6rem 0 0;padding:0;list-style:none;display:grid;gap:.5rem}
+    .features li{display:flex;gap:.5rem}
+    .features li::before{content:"✓";color:var(--pri)}
+    .section-head{display:flex;align-items:center;justify-content:space-between;gap:1rem;margin-bottom:1rem}
+    .inline-form{display:flex;gap:.6rem;flex-wrap:wrap}
+    input, select, textarea{
+      background:#0d111a;border:1px solid #2b3446;color:#e7ecf3;border-radius:12px;padding:.7rem .9rem;outline:none;width:100%;
+    }
+    label{font-size:.9rem;color:#cfd6e2}
+    .stack{display:grid;gap:.6rem}
+    .two-col{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+    @media (max-width:800px){.two-col{grid-template-columns:1fr}}
+    #map{height:420px;border-radius:18px;border:1px solid #242a36;overflow:hidden}
+    .footer{padding:2rem 0;border-top:1px solid #242a36;color:#b7bfcd}
+    .notice{font-size:.85rem;color:#9fb0c8}
+    .badge{padding:.25rem .55rem;border-radius:8px;background:#1b2130;border:1px solid #2b3446;font-size:.75rem}
+    .kicker{letter-spacing:.18em;text-transform:uppercase;color:#9fb0c8;font-size:.75rem}
+    .video{aspect-ratio:16/9;width:100%;border:0;border-radius:16px;overflow:hidden}
+  </style>
+</head>
+<body>
+  <header class="nav">
+    <div class="container nav-inner">
+      <div class="brand">
+        <div class="logo">JT</div>
+        <div>
+          <strong>Jharkhand Tourism</strong><br>
+          <span class="kicker">Eco & Culture Platform</span>
+        </div>
+      </div>
+      <nav class="menu">
+        <a href="#places">Places</a>
+        <a href="#videos">Videos</a>
+        <a href="#packages">Packages</a>
+        <a href="#book">Guide & Transport</a>
+        <a href="#mapbox">Map</a>
+      </nav>
+      <a class="btn btn-outline" href="#chat">Chatbot</a>
+    </div>
+  </header>
+
+  <section class="hero">
+    <div class="container">
+      <h1>Explore Jharkhand — waterfalls, forests, heritage & warm homestays</h1>
+      <p class="muted">
+        Plan a personalized itinerary, preview sites, book a local guide and transport, and choose from affordable or premium eco-friendly packages.
+      </p>
+      <div class="inline-form" style="justify-content:center;margin-top:1rem">
+        <a href="#packages" class="btn">View Tour Packages</a>
+        <a href="#book" class="btn btn-outline">Book Guide/Transport</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Featured Places -->
+  <section id="places">
+    <div class="container">
+      <div class="section-head">
+        <h2>Best Places to Visit in Jharkhand</h2>
+        <span class="notice"></span>
+      </div>
+
+      <div class="grid grid-3" id="placeGrid">
+        <!-- Cards injected by JS -->
+      </div>
+    </div>
+  </section>
+
+  <!-- Video Gallery -->
+  <section id="videos">
+    <div class="container">
+      <div class="section-head">
+        <h2>Video Gallery — See it before you go</h2>
+        <div class="inline-form">
+          <select id="videoSelect">
+            <option value="Jharkhand tourism">Jharkhand Tourism (Highlights)</option>
+            <option value="Dassam Falls Jharkhand">Dassam Falls</option>
+            <option value="Hundru Falls Ranchi">Hundru Falls</option>
+            <option value="Betla National Park">Betla National Park</option>
+            <option value="Netarhat sunset point">Netarhat</option>
+            <option value="Patratu Valley">Patratu Valley</option>
+            <option value="Baidyanath Jyotirlinga Deoghar">Baidyanath Temple (Deoghar)</option>
+            <option value="Parasnath Hill Shikharji">Parasnath Hill (Shikharji)</option>
+          </select>
+          <button class="btn" onclick="loadVideo()">Load Video</button>
+        </div>
+      </div>
+
+      <iframe id="yt" class="video"
+        src="https://www.youtube.com/embed/O6Aza9q624w"
+        allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen>
+      </iframe>
+    </div>
+  </section>
+
+  <!-- Packages -->
+  <section id="packages">
+    <div class="container">
+      <h2>Packages</h2>
+      <div class="grid grid-3">
+        <div class="card">
+          <img class="media" src="https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=1600&auto=format&fit=crop" alt="Standard package cover">
+          <div class="pad">
+            <span class="chip">Classic · 3D/2N</span>
+            <h3>Green Getaway (Standard)</h3>
+            <p class="muted">Perfect for students & backpackers—clean stays, local food, shared transport, and must-see spots.</p>
+            <div class="price">₹6,999 <span class="muted" style="font-size:.9rem">per person</span></div>
+            <ul class="features">
+              <li>Shared cab / Tempo Traveller</li>
+              <li>Homestay or tidy guesthouse (double/triple)</li>
+              <li>Ranchi city + Dassam & Hundru + Patratu view point</li>
+              <li>Guided temple visit (optional)</li>
+              <li>Eco-pledge & refill bottle provided</li>
+              <li>Train Included</li>
+            </ul>
+            <div class="inline-form" style="margin-top:1rem">
+              <a href="#book" class="btn">Book Budget</a>
+              <span class="badge">Free cancellation (48h)</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <img class="media" src="https://media.istockphoto.com/id/485371557/photo/twilight-at-spirit-island.jpg?s=612x612&w=0&k=20&c=FSGliJ4EKFP70Yjpzso0HfRR4WwflC6GKfl4F3Hj7fk=" alt="Deluxe package cover">
+          <div class="pad">
+            <span class="chip">Exclusive · 5D/4N</span>
+            <h3>Mystic Trails (Deluxe)</h3>
+            <p class="muted">Experience Jharkhand’s beauty with shared travel, cozy stays, guided tours, and authentic local vibes.</p>
+            <div class="price">₹14,990 <span class="muted" style="font-size:.9rem">per person</span></div>
+            <ul class="features">
+              <li>AC shared vehicle (not private SUV)</li>
+              <li>Stay in a comfortable 3-star hotel or eco-friendly guesthouse</li>
+              <li>Guided visit to one tribal handicraft market</li>
+              <li>Breakfast & Dinner included</li>
+              <li>No flight included</li>
+              <li>No personal concierge</li>
+            </ul>
+            <div class="inline-form" style="margin-top:1rem">
+              <a href="#book" class="btn">Book Medium</a>
+              <span class="badge">Small groups (max 5)</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <img class="media" src="https://images.unsplash.com/photo-1482192505345-5655af888cc4?q=80&w=1600&auto=format&fit=crop" alt="Premium package cover">
+          <div class="pad">
+            <span class="chip">Elite · 7D/6N</span>
+            <h3>Luxury Highlands (Premium)</h3>
+            <p class="muted">Slow travel with best-rated stays, private SUV, nature guide, and curated cultural experiences.</p>
+            <div class="price">₹22,900 <span class="muted" style="font-size:.9rem">per person</span></div>
+            <ul class="features">
+              <li>Private SUV + chauffeur</li>
+              <li>Boutique eco-resort / premium homestay & 5-star Hotels</li>
+              <li>Netarhat sunrise & Betla safari</li>
+              <li>Tribal handicraft workshop + local cuisine trail</li>
+              <li>24×7 concierge & flexible timings</li>
+              <li>Flight Included</li>
+            </ul>
+            <div class="inline-form" style="margin-top:1rem">
+              <a href="#book" class="btn">Book Premium</a>
+              <span class="badge">Small groups (max 8)</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="notice" style="margin-top:.8rem">Prices exclude entry tickets where applicable. Custom dates & group discounts available.</p>
+    </div>
+  </section>
+
+  <!-- Booking: Guide + Transport -->
+  <section id="book">
+    <div class="container">
+      <div class="section-head">
+        <h2>Book a Local Guide & Transportation</h2>
+        <span class="badge">Secure form · Confirmation by email/SMS</span>
+      </div>
+
+      <div class="two-col">
+        <!-- Guide -->
+        <div class="card">
+          <div class="pad">
+            <h3>Guide Booking</h3>
+            <div class="stack">
+              <label>Full Name <input id="gName" placeholder="Your name"></label>
+              <label>Phone/WhatsApp <input id="gPhone" placeholder="+91 …"></label>
+              <label>Email <input id="gEmail" type="email" placeholder="you@example.com"></label>
+              <label>Preferred Language
+                <select id="gLang">
+                  <option>English</option><option>Hindi</option><option>Bangla</option><option>Ho</option><option>Santhali</option>
+                </select>
+              </label>
+              <label>Places of Interest
+                <select id="gPlace" multiple>
+                  <option>Dassam Falls</option><option>Hundru Falls</option><option>Betla National Park</option>
+                  <option>Netarhat</option><option>Patratu Valley</option><option>Baidyanath Temple (Deoghar)</option>
+                  <option>Parasnath Hill (Shikharji)</option><option>Ranchi Lake & Rock Garden</option>
+                </select>
+              </label>
+              <label>Date <input id="gDate" type="date"></label>
+              <button class="btn" onclick="bookGuide()">Request Guide</button>
+              <p id="gMsg" class="notice"></p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Transport -->
+        <div class="card">
+          <div class="pad">
+            <h3>Transport Booking</h3>
+            <div class="stack">
+              <label>Name <input id="tName" placeholder="Your name"></label>
+              <label>Pickup Location <input id="tFrom" placeholder="e.g., Ranchi Airport (IXR)"></label>
+              <label>Destination(s) <input id="tTo" placeholder="e.g., Netarhat, Betla"></label>
+              <label>Vehicle Type
+                <select id="tVehicle">
+                  <option>Hatchback (4 seater)</option>
+                  <option>Sedan (4 seater)</option>
+                  <option>SUV (6-7 seater)</option>
+                  <option>Tempo Traveller (12-17 seater)</option>
+                </select>
+              </label>
+              <label>Date & Time <input id="tDate" type="datetime-local"></label>
+              <button class="btn" onclick="bookTransport()">Request Transport</button>
+              <p id="tMsg" class="notice"></p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Simple itinerary helper -->
+      <div class="card" style="margin-top:1rem">
+        <div class="pad">
+          <h3>Quick Itinerary Generator</h3>
+          <div class="inline-form">
+            <select id="days"><option>2</option><option selected>3</option><option>4</option><option>5</option></select>
+            <select id="pace"><option>Relaxed</option><option selected>Balanced</option><option>Packed</option></select>
+            <button class="btn" onclick="makePlan()">Generate Plan</button>
+          </div>
+          <pre id="plan" class="notice" style="white-space:pre-wrap;margin-top:.7rem;background:#0d111a;border:1px solid #2b3446;padding:.8rem;border-radius:10px"></pre>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Map -->
+  <section id="mapbox">
+    <div class="container">
+      <h2>Interactive Map — Major Sites</h2>
+      <div id="map" class="card"></div>
+      <p class="notice" style="margin-top:.7rem">Pan & zoom the map. Tap a marker for quick info.</p>
+    </div>
+  </section>
+
+  <!-- Chatbot (placeholder) -->
+  <section id="chat">
+    <div class="container">
+      <div class="card">
+        <div class="pad">
+          <h3>Multilingual Chat Assistant</h3>
+          <p class="muted">Ask about travel times, weather, and permits. (In production, connect to an AI backend.)</p>
+          <div class="inline-form">
+            <select id="chatLang"><option>English</option><option>Hindi</option><option>Bangla</option></select>
+            <input id="chatInput" placeholder="Type your question…" />
+            <button class="btn" onclick="fakeChat()">Send</button>
+          </div>
+          <div id="chatLog" class="stack" style="margin-top:1rem"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <div class="container two-col">
+      <div>
+        <div class="brand">
+          <div class="logo">JT</div>
+          <div><strong>Jharkhand Tourism</strong><div class="kicker">Inclusive · Organized · Sustainable</div></div>
+        </div>
+        <p class="notice" style="margin-top:.6rem">
+          © <span id="yr"></span> Jharkhand Eco & Cultural Tourism.
+        </p>
+      </div>
+      <div>
+        <div class="kicker">Contact</div>
+        <p class="notice">support@jharkhand-tourism.experiences · +91 9313343179</p>
+        <p class="notice">Ranchi, Jharkhand, India</p>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // -------- Featured Places (images via topic-based Unsplash placeholders) ----------
+    const PLACES = [
+      {
+        name:"Dassam Falls (Ranchi)",
+        tag:"Waterfall",
+        img:"https://dynamic-media-cdn.tripadvisor.com/media/photo-o/19/fa/bd/6e/a-full-view-of-the-falls.jpg?w=900&h=500&s=1",
+        blurb:"A spectacular cascade on the Kanchi River surrounded by sal forests."
+      },
+      {
+        name:"Hundru Falls (Ranchi)",
+        tag:"Waterfall",
+        img:"https://thumbs.dreamstime.com/b/hundru-waterfalls-jharkhand-287522583.jpg",
+        blurb:"Monsoon-favorite plunge pool and scenic rock formations."
+      },
+      {
+        name:"Betla National Park (Palamu)",
+        tag:"Wildlife",
+        img:"https://superbcollections.com/wp-content/uploads/2023/08/Betla-National-Park.jpeg",
+        blurb:"Forests, elephants, and the ruins of Palamu Fort—Jharkhand’s classic safari."
+      },
+      {
+        name:"Netarhat",
+        tag:"Hill Station",
+        img:"https://thumbs.dreamstime.com/b/netarhat-jharkhand-indian-view-pictures-taken-vishal-singh-170710563.jpg",
+        blurb:"‘Queen of Chotanagpur’—famed for sunrise/sunset points and pine avenues."
+      },
+      {
+        name:"Patratu Valley",
+        tag:"Scenic Drive",
+        img:"https://media-cdn.tripadvisor.com/media/photo-s/0e/5e/c0/46/drone-shot-of-the-valley.jpg",
+        blurb:"Winding roads, emerald hills, and the shimmering Patratu Lake."
+      },
+      {
+        name:"Baidyanath Temple (Deoghar)",
+        tag:"Pilgrimage",
+        img:"https://cdn1.prayagsamagam.com/media/2023/01/25183337/Baidyanath-Dham-1-1024x576.webp",
+        blurb:"One of the 12 Jyotirlingas—vibrant religious hub with old-world charm."
+      },
+      {
+        name:"Parasnath Hill (Shikharji)",
+        tag:"Trek",
+        img:"https://dynamic-media-cdn.tripadvisor.com/media/photo-o/09/6c/f6/c8/parasnath-hills.jpg?w=1200&h=-1&s=1",
+        blurb:"Important Jain pilgrimage; rewarding hikes and misty viewpoints."
+      },
+      {
+        name:"Ranchi Lake & Rock Garden",
+        tag:"City",
+        img:"https://dynamic-media-cdn.tripadvisor.com/media/photo-o/18/3d/c0/dd/rock-garden.jpg?w=900&h=500&s=1",
+        blurb:"Relaxing lakeside vibes and sculpted gardens within the city."
+      },
+      {
+        name:"Tribal Handicrafts",
+        tag:"Marketplace",
+        img:"https://zineart.in/images/DOK/DOK006011.webp",
+        blurb:"Local artisans, dokra metal craft, bamboo works—shop responsibly."
+      }
+    ];
+    const grid = document.getElementById('placeGrid');
+    grid.innerHTML = PLACES.map(p => `
+      <article class="card">
+        <img class="media" src="${p.img}" alt="${p.name}">
+        <div class="pad">
+          <span class="chip">${p.tag}</span>
+          <h3 style="margin:.4rem 0 .3rem">${p.name}</h3>
+          <p class="muted">${p.blurb}</p>
+        </div>
+      </article>
+    `).join('');
+
+    // ----------- Video Loader (YouTube search embed) -----------
+    function loadVideo(){
+      const q = encodeURIComponent(document.getElementById('videoSelect').value);
+      document.getElementById('yt').src = `https://www.youtube.com/embed/O6Aza9q624w`;
+    }
+
+    // -------- Guide & Transport (localStorage to simulate booking) ----------
+    function save(key, payload){
+      const arr = JSON.parse(localStorage.getItem(key) || '[]');
+      arr.push({...payload, ts: new Date().toISOString()});
+      localStorage.setItem(key, JSON.stringify(arr));
+    }
+    function bookGuide(){
+      const data = {
+        name: gName.value.trim(),
+        phone: gPhone.value.trim(),
+        email: gEmail.value.trim(),
+        lang: gLang.value,
+        place: Array.from(gPlace.selectedOptions).map(o=>o.value),
+        date: gDate.value
+      };
+      if(!data.name || !data.phone || !data.date){ gMsg.textContent = "Please fill name, phone and date."; gMsg.style.color = "#ffaaaa"; return; }
+      save('guideBookings', data);
+      gMsg.textContent = "Guide request submitted! We’ll confirm availability shortly.";
+      gMsg.style.color = "#9fe29f";
+      // simple itinerary kick
+      document.getElementById('plan').textContent =
+        `Suggested day plan for ${data.place.slice(0,3).join(", ")}:\n• Morning: Meet guide, quick briefing.\n• Mid-day: Site visits & lunch at local eatery.\n• Evening: Sunset view & return.\n• Tips: Carry water, avoid litter, respect local customs.`;
+    }
+    function bookTransport(){
+      const data = {
+        name: tName.value.trim(),
+        from: tFrom.value.trim(),
+        to: tTo.value.trim(),
+        vehicle: tVehicle.value,
+        when: tDate.value
+      };
+      if(!data.name || !data.from || !data.to || !data.when){ tMsg.textContent="Please complete all fields."; tMsg.style.color="#ffaaaa"; return; }
+      save('transportBookings', data);
+      tMsg.textContent = "Transport request received! You’ll get driver details after assignment.";
+      tMsg.style.color = "#9fe29f";
+    }
+
+    // --------- Quick itinerary generator ----------
+    function makePlan(){
+      const d = parseInt(days.value,10);
+      const pace = paceSelectValue();
+      const blocks = {
+        Relaxed: ["Slow breakfast","One major site","Local lunch","Siesta","Sunset viewpoint","Market stroll"],
+        Balanced: ["Early start","2–3 sites","Lunch en-route","Short hike","Café break","Sunset point"],
+        Packed: ["Pre-dawn drive","3–4 sites","Pack-lunch","Long hike","Cultural stop","Late drive back"]
+      };
+      const daily = blocks[pace];
+      const skeleton = [
+        "Ranchi city + Dassam/Hundru",
+        "Patratu Valley drive + Lake",
+        "Netarhat day trip",
+        "Betla safari + Palamu Fort",
+        "Deoghar or Parasnath (as per interest)"
+      ];
+      let out = [];
+      for(let i=0;i<d;i++){
+        out.push(`Day ${i+1}: ${skeleton[i] || "Leisure / shopping / buffer"}\n  • ${daily.join("\n  • ")}`);
+      }
+      plan.textContent = out.join("\n\n");
+    }
+    function paceSelectValue(){ return document.getElementById('pace')?.value || 'Balanced'; }
+
+    // --------- Map (Leaflet + OSM) ----------
+    const map = L.map('map').setView([23.37, 85.33], 7); // Jharkhand centroid
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19, attribution: '&copy; OpenStreetMap'
+    }).addTo(map);
+
+    const SITES = [
+      {name:"Dassam Falls", coords:[22.62,85.44], info:"Ranchi district; best post-monsoon."},
+      {name:"Hundru Falls", coords:[23.31,85.49], info:"Crowd favorite waterfall."},
+      {name:"Betla National Park", coords:[23.85,84.20], info:"Wildlife & Palamu Fort."},
+      {name:"Netarhat", coords:[23.48,84.27], info:"Sunrise/Sunset points."},
+      {name:"Patratu Valley", coords:[23.68,85.28], info:"Scenic ghats & lake."},
+      {name:"Baidyanath Temple (Deoghar)", coords:[24.48,86.70], info:"Jyotirlinga shrine."},
+      {name:"Parasnath Hill (Shikharji)", coords:[23.92,86.15], info:"Jain pilgrimage; trek."},
+      {name:"Ranchi Lake", coords:[23.37,85.33], info:"City lake & Rock Garden."}
+    ];
+    SITES.forEach(s=>{
+      L.marker(s.coords).addTo(map).bindPopup(`<strong>${s.name}</strong><br>${s.info}`);
+    });
+
+    // --------- Simple Chatbot placeholder ----------
+    function fakeChat(){
+      const box = document.getElementById('chatInput');
+      const lang = document.getElementById('chatLang').value;
+      const q = box.value.trim(); if(!q) return;
+      const log = document.getElementById('chatLog');
+      const you = document.createElement('div'); you.innerHTML = `<strong>You:</strong> ${q}`; log.appendChild(you);
+      const a = document.createElement('div'); a.className='notice';
+      a.innerHTML = `<strong>Assistant (${lang}):</strong> For cabs from Ranchi Airport to Netarhat (~160 km), plan 4–5 hrs. Carry cash for forest gates, keep plastic to a minimum.`;
+      log.appendChild(a);
+      box.value = "";
+    }
+
+    // footer year
+    document.getElementById('yr').textContent = new Date().getFullYear();
+  </script>
+</body>
+</html>
