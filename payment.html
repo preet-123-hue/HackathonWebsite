@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment - Jharkhand Tourism</title>
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+    <style>
+        :root{
+            --bg:#0f1115; --card:#151923; --muted:#9ba3b4; --pri:#73d13d; --pri-2:#3bd1c4; --acc:#ffd166; --danger:#ff6b6b;
+        }
+        *{box-sizing:border-box}
+        html,body{margin:0;background:var(--bg);color:#e7ecf3;font-family:Poppins,system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial}
+        .container{width:min(800px,92%);margin:auto;padding:2rem 0}
+        .card{background:var(--card);border:1px solid #242a36;border-radius:18px;padding:2rem;margin:1rem 0}
+        .btn{display:inline-block;background:linear-gradient(135deg,var(--pri),var(--pri-2));color:#0b0e13;padding:.7rem 1.5rem;border:none;border-radius:12px;font-weight:700;cursor:pointer;width:100%;font-size:1rem}
+        .btn:hover{opacity:0.9}
+        input{background:#0d111a;border:1px solid #2b3446;color:#e7ecf3;border-radius:12px;padding:.7rem .9rem;outline:none;width:100%;margin:.5rem 0}
+        label{font-size:.9rem;color:#cfd6e2;display:block;margin-top:1rem}
+        .price{font-size:2rem;font-weight:800;color:var(--pri)}
+        .success{background:#4CAF50;color:white;padding:1rem;border-radius:10px;text-align:center;margin:1rem 0}
+        .error{background:#f44336;color:white;padding:1rem;border-radius:10px;text-align:center;margin:1rem 0}
+        h1{color:var(--pri);text-align:center}
+        .package-info{text-align:center;margin-bottom:2rem}
+        .form-section{margin-top:2rem}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Complete Your Booking</h1>
+        
+        <div class="card">
+            <div class="package-info">
+                <h2 id="packageName">Loading...</h2>
+                <p id="packageDesc">Loading package details...</p>
+                <div class="price" id="packagePrice">₹0</div>
+            </div>
+            
+            <div class="form-section">
+                <h3>Your Details</h3>
+                <label>Full Name</label>
+                <input type="text" id="userName" placeholder="Enter your full name" required>
+                
+                <label>Phone Number</label>
+                <input type="tel" id="userPhone" placeholder="+91 9876543210" required>
+                
+                <label>Email Address</label>
+                <input type="email" id="userEmail" placeholder="your@email.com" required>
+                
+                <button class="btn" onclick="proceedToPay()" id="payBtn">Proceed to Pay</button>
+            </div>
+        </div>
+        
+        <div id="message"></div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:5000/api';
+        let packageData = {};
+
+        // Get package data from URL parameters
+        function getPackageFromURL() {
+            const params = new URLSearchParams(window.location.search);
+            packageData = {
+                name: params.get('name') || 'Green Getaway (Standard)',
+                description: params.get('desc') || 'Perfect for students & backpackers—clean stays, local food, shared transport, and must-see spots.',
+                price: parseInt(params.get('price')) || 6999
+            };
+            
+            document.getElementById('packageName').textContent = packageData.name;
+            document.getElementById('packageDesc').textContent = packageData.description;
+            document.getElementById('packagePrice').textContent = `₹${packageData.price.toLocaleString()}`;
+        }
+
+        function proceedToPay() {
+            const name = document.getElementById('userName').value.trim();
+            const phone = document.getElementById('userPhone').value.trim();
+            const email = document.getElementById('userEmail').value.trim();
+            
+            if (!name || !phone || !email) {
+                showMessage('Please fill all required fields', 'error');
+                return;
+            }
+            
+            const options = {
+                key: 'rzp_test_RDDGy0BlMEwXCa', // Your Razorpay Key ID
+                amount: packageData.price * 100, // Amount in paise
+                currency: 'INR',
+                name: 'Jharkhand Tourism',
+                description: packageData.name,
+                image: 'https://via.placeholder.com/100x100?text=JT',
+                handler: function (response) {
+                    handlePaymentSuccess(response, {name, phone, email});
+                },
+                prefill: {
+                    name: name,
+                    email: email,
+                    contact: phone
+                },
+                theme: {
+                    color: '#73d13d'
+                },
+                modal: {
+                    ondismiss: function() {
+                        showMessage('Payment cancelled', 'error');
+                    }
+                }
+            };
+            
+            const rzp = new Razorpay(options);
+            rzp.open();
+        }
+
+        async function handlePaymentSuccess(paymentResponse, userDetails) {
+            try {
+                showMessage('Payment successful! Saving booking details...', 'success');
+                
+                const bookingData = {
+                    name: userDetails.name,
+                    phone: userDetails.phone,
+                    email: userDetails.email,
+                    booking_type: 'package',
+                    amount: packageData.price,
+                    payment_status: 'success',
+                    payment_id: paymentResponse.razorpay_payment_id,
+                    package_name: packageData.name,
+                    datetime: new Date().toISOString()
+                };
+                
+                const response = await fetch(`${API_BASE}/payment`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(bookingData)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showMessage(`Booking confirmed! Payment ID: ${paymentResponse.razorpay_payment_id}`, 'success');
+                    document.getElementById('payBtn').textContent = 'Booking Complete';
+                    document.getElementById('payBtn').disabled = true;
+                } else {
+                    showMessage(`Payment successful but booking failed: ${result.message}`, 'error');
+                }
+                
+            } catch (error) {
+                showMessage(`Payment successful but booking failed: ${error.message}`, 'error');
+            }
+        }
+
+        function showMessage(text, type) {
+            const messageDiv = document.getElementById('message');
+            messageDiv.innerHTML = `<div class="${type}">${text}</div>`;
+        }
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', () => {
+            getPackageFromURL();
+        });
+    </script>
+</body>
+</html>

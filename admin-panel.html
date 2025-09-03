@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - Tourism Bookings</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: #1a1a2e;
+            color: #fff;
+            min-height: 100vh;
+        }
+
+        .navbar {
+            background: #16213e;
+            padding: 1rem;
+            border-bottom: 2px solid #4CAF50;
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .nav-btn {
+            padding: 0.5rem 1rem;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .nav-btn:hover, .nav-btn.active {
+            background: #45a049;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .section {
+            display: none;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .section-title {
+            color: #4CAF50;
+            font-size: 1.5rem;
+        }
+
+        .refresh-btn {
+            padding: 0.5rem 1rem;
+            background: #2196F3;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .refresh-btn:hover {
+            background: #1976D2;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: #ccc;
+        }
+
+        .error {
+            text-align: center;
+            padding: 2rem;
+            color: #f44336;
+        }
+
+        .table-container {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 1rem;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 600px;
+        }
+
+        th, td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        th {
+            background: rgba(76, 175, 80, 0.2);
+            color: #4CAF50;
+        }
+
+        tr:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        @media (max-width: 768px) {
+            .nav-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .section-header {
+                flex-direction: column;
+                gap: 1rem;
+            }
+            
+            .container {
+                padding: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-buttons">
+            <button class="nav-btn active" onclick="showSection('guide')">Guide Bookings</button>
+            <button class="nav-btn" onclick="showSection('transport')">Transport Bookings</button>
+            <button class="nav-btn" onclick="showSection('activity')">Activity Bookings</button>
+        </div>
+    </nav>
+
+    <div class="container">
+        <!-- Guide Bookings Section -->
+        <div id="guide-section" class="section active">
+            <div class="section-header">
+                <h2 class="section-title">Guide Bookings</h2>
+                <div>
+                    <span id="guide-status">Auto-refresh: ON</span>
+                    <button class="refresh-btn" onclick="loadBookings('guide')">Refresh</button>
+                </div>
+            </div>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Full Name</th>
+                            <th>Phone</th>
+                            <th>Email</th>
+                            <th>Preferred Language</th>
+                            <th>Places of Interest</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody id="guide-table">
+                        <tr><td colspan="7" class="loading">Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Transport Bookings Section -->
+        <div id="transport-section" class="section">
+            <div class="section-header">
+                <h2 class="section-title">Transport Bookings</h2>
+                <div>
+                    <span id="transport-status">Auto-refresh: ON</span>
+                    <button class="refresh-btn" onclick="loadBookings('transport')">Refresh</button>
+                </div>
+            </div>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Full Name</th>
+                            <th>Pickup Location</th>
+                            <th>Destination</th>
+                            <th>Vehicle Type</th>
+                            <th>Date & Time</th>
+                        </tr>
+                    </thead>
+                    <tbody id="transport-table">
+                        <tr><td colspan="6" class="loading">Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Activity Bookings Section -->
+        <div id="activity-section" class="section">
+            <div class="section-header">
+                <h2 class="section-title">Activity Bookings</h2>
+                <div>
+                    <span id="activity-status">Auto-refresh: ON</span>
+                    <button class="refresh-btn" onclick="loadBookings('activity')">Refresh</button>
+                </div>
+            </div>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Full Name</th>
+                            <th>Phone</th>
+                            <th>Email</th>
+                            <th>Activity</th>
+                            <th>Location</th>
+                            <th>Participants</th>
+                            <th>Date</th>
+                            <th>Special Requirements</th>
+                        </tr>
+                    </thead>
+                    <tbody id="activity-table">
+                        <tr><td colspan="9" class="loading">Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:5000/api';
+        let autoRefreshInterval;
+        let currentSection = 'guide';
+
+        function showSection(section) {
+            // Update nav buttons
+            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+
+            // Update sections
+            document.querySelectorAll('.section').forEach(sec => sec.classList.remove('active'));
+            document.getElementById(`${section}-section`).classList.add('active');
+
+            currentSection = section;
+            loadBookings(section);
+        }
+
+        async function fetchWithTimeout(url, options = {}, timeout = 5000) {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), timeout);
+            
+            try {
+                const response = await fetch(url, {
+                    ...options,
+                    signal: controller.signal
+                });
+                clearTimeout(timeoutId);
+                return response;
+            } catch (error) {
+                clearTimeout(timeoutId);
+                throw error;
+            }
+        }
+
+        async function loadBookings(type) {
+            const tableBody = document.getElementById(`${type}-table`);
+            const statusEl = document.getElementById(`${type}-status`);
+            const url = `${API_BASE}/bookings/${type}`;
+            
+            try {
+                console.log(`[${new Date().toLocaleTimeString()}] Fetching ${type} bookings`);
+                
+                const response = await fetchWithTimeout(url, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    mode: 'cors'
+                }, 5000);
+                
+                if (!response.ok) {
+                    throw new Error(`Server error: ${response.status} ${response.statusText}`);
+                }
+                
+                const result = await response.json();
+                
+                if (!result.success) {
+                    throw new Error(result.message || 'API returned error');
+                }
+                
+                const data = result.data || [];
+                
+                if (data.length === 0) {
+                    const colspan = type === 'guide' ? 7 : type === 'transport' ? 6 : 9;
+                    tableBody.innerHTML = `<tr><td colspan="${colspan}" class="loading">No ${type} bookings found</td></tr>`;
+                    statusEl.textContent = `No ${type} bookings in database`;
+                    return;
+                }
+                
+                let newHTML = '';
+                
+                if (type === 'guide') {
+                    newHTML = data.map(item => `
+                        <tr>
+                            <td>${item.id || '-'}</td>
+                            <td>${item.full_name || '-'}</td>
+                            <td>${item.phone || '-'}</td>
+                            <td>${item.email || '-'}</td>
+                            <td>${item.preferred_language || '-'}</td>
+                            <td>${Array.isArray(item.places_of_interest) ? item.places_of_interest.join(', ') : (item.places_of_interest || '-')}</td>
+                            <td>${item.date ? new Date(item.date).toLocaleDateString() : '-'}</td>
+                        </tr>
+                    `).join('');
+                } else if (type === 'transport') {
+                    newHTML = data.map(item => `
+                        <tr>
+                            <td>${item.id || '-'}</td>
+                            <td>${item.full_name || '-'}</td>
+                            <td>${item.pickup_location || '-'}</td>
+                            <td>${item.destination || '-'}</td>
+                            <td>${item.vehicle_type || '-'}</td>
+                            <td>${item.datetime ? new Date(item.datetime).toLocaleString() : '-'}</td>
+                        </tr>
+                    `).join('');
+                } else if (type === 'activity') {
+                    newHTML = data.map(item => `
+                        <tr>
+                            <td>${item.id || '-'}</td>
+                            <td>${item.full_name || '-'}</td>
+                            <td>${item.phone || '-'}</td>
+                            <td>${item.email || '-'}</td>
+                            <td>${item.activity || '-'}</td>
+                            <td>${item.location || '-'}</td>
+                            <td>${item.participants || '-'}</td>
+                            <td>${item.date ? new Date(item.date).toLocaleDateString() : '-'}</td>
+                            <td>${item.special_requirements || '-'}</td>
+                        </tr>
+                    `).join('');
+                }
+                
+                tableBody.innerHTML = newHTML;
+                statusEl.textContent = `Last updated: ${new Date().toLocaleTimeString()} (${data.length} bookings)`;
+                console.log(`✅ ${type} bookings loaded successfully`);
+                
+            } catch (error) {
+                console.error(`❌ ${type} fetch error:`, error.message);
+                
+                let errorMsg = 'Failed to fetch data';
+                if (error.name === 'AbortError') {
+                    errorMsg = 'Request timeout - server too slow';
+                } else if (error.name === 'TypeError' && error.message.includes('fetch')) {
+                    errorMsg = 'Cannot connect to server. Start Flask with: python app_supabase.py';
+                } else if (error.message) {
+                    errorMsg = error.message;
+                }
+                
+                const colspan = type === 'guide' ? 7 : type === 'transport' ? 6 : 9;
+                tableBody.innerHTML = `<tr><td colspan="${colspan}" class="error">${errorMsg}</td></tr>`;
+                statusEl.textContent = 'Connection failed';
+            }
+        }
+
+        function loadAllBookings() {
+            loadBookings('guide');
+            loadBookings('transport');
+            loadBookings('activity');
+        }
+
+        function startAutoRefresh() {
+            if (autoRefreshInterval) {
+                clearInterval(autoRefreshInterval);
+            }
+            autoRefreshInterval = setInterval(() => {
+                try {
+                    loadAllBookings();
+                } catch (error) {
+                    console.error('Auto-refresh error:', error);
+                }
+            }, 10000);
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Admin panel initialized');
+            loadAllBookings();
+            startAutoRefresh();
+        });
+    </script>
+</body>
+</html>
